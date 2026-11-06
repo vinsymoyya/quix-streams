@@ -1,0 +1,37 @@
+name: Kafka consumer baseline comparison
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - case: baseline
+            ref: 54a9d40cb117d69e104ea0c596e5b9c3868830b3
+          - case: s3-fix
+            ref: f1fa25256f8993c1afa9b22523f57f8423d80e68
+    name: Kafka checks (${{ matrix.case }})
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install matching test dependencies
+        run: >-
+          python -m pip install -r requirements.txt -r tests/requirements.txt
+          'boto3>=1.35.65,<2.0' 'mypy-boto3-s3>=1.35.65,<2.0' pytest-repeat
+      - name: Repeat the unchanged Kafka tests
+        run: >-
+          python -m pytest -v --log-cli-level=ERROR --count=20
+          tests/test_quixstreams/test_kafka/test_consumer.py::TestConsumerListTopics
+          tests/test_quixstreams/test_kafka/test_consumer.py::TestConsumerPauseResume
