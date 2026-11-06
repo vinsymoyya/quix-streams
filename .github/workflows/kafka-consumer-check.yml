@@ -1,6 +1,8 @@
 name: Kafka consumer baseline comparison
 
 on:
+  push:
+    branches: [validation/kafka-consumer-baseline]
   workflow_dispatch:
 
 permissions:
